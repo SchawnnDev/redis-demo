@@ -3,13 +3,15 @@
 ## Setting up the app
 
 ```bash
-go mod tidy
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
 ```
 
 ## Launching the app
 
 ```bash
-go run main.go
+python app.py
 ```
 
 ## Performances
@@ -23,7 +25,7 @@ CPU: AMD Ryzen 7 2700X (16) @ 4.15 GHz
 ### Http without redis
 
 ```bash
-redis-demo (main)> time curl "http://localhost:8080/calculation/45"
+redis-demo (main)> time curl "http://192.168.1.169:8080/calculation/45"
 Fibonacci(45) = 1134903170
 ________________________________________________________
 Executed in    5.99 secs      fish           external
@@ -35,7 +37,7 @@ Executed in    5.99 secs      fish           external
 
 First calculation:
 ```bash
-redis-demo (main)> time curl "http://localhost:8080/calculation/45?use_redis=true"
+redis-demo (main)> time curl "http://192.168.1.169:8080/calculation/45?use_redis=true"
 Fibonacci(45) = 1134903170
 ________________________________________________________
 Executed in    6.04 secs      fish           external
@@ -45,7 +47,7 @@ Executed in    6.04 secs      fish           external
 
 Second calculation, the result is cached:
 ```bash
-redis-demo (main)> time curl "http://localhost:8080/calculation/45?use_redis=true"
+redis-demo (main)> time curl "http://192.168.1.169:8080/calculation/45?use_redis=true"
 Fibonacci(45) = 1134903170
 ________________________________________________________
 Executed in   15.74 millis    fish           external
@@ -57,7 +59,7 @@ Executed in   15.74 millis    fish           external
 
 First calculation:
 ```bash
-redis-demo (main)> time curl "http://localhost:8080/calculation/45?use_redis=true&use_redis_hash=true"
+redis-demo (main)> time curl "http://192.168.1.169:8080/calculation/45?use_redis=true&use_redis_hash=true"
 Fibonacci(45) = 1134903170
 ________________________________________________________
 Executed in    6.03 secs      fish           external
@@ -67,7 +69,7 @@ Executed in    6.03 secs      fish           external
 
 Second calculation, the result is cached:
 ```bash
-redis-demo (main)> time curl "http://localhost:8080/calculation/45?use_redis=true&use_redis_hash=true"
+redis-demo (main)> time curl "http://192.168.1.169:8080/calculation/45?use_redis=true&use_redis_hash=true"
 Fibonacci(45) = 1134903170
 ________________________________________________________
 Executed in    7.55 millis    fish           external
