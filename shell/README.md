@@ -78,3 +78,15 @@ hgetall myhash
 ```bash
 hget myhash field1
 ```
+
+## Setting an expire time for a hash field
+
+```bash
+hexpire myhash 10 fields 1 field1
+```
+
+## Getting the expire time for a hash field
+
+```bash
+httl myhash fields 1 field1
+```
