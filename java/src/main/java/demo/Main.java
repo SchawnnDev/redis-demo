@@ -40,6 +40,7 @@ public class Main {
                 String query = exchange.getRequestURI().getQuery();
                 boolean useRedis = query != null && query.contains("use_redis=true");
                 boolean useRedisHash = query != null && query.contains("use_redis_hash=true");
+                boolean withTTL = query != null && query.contains("with_ttl=true");
                 String path = exchange.getRequestURI().getPath();
                 String nbStr = path.substring("/calculation/".length());
                 long nb;
@@ -61,9 +62,9 @@ public class Main {
                 long result;
                 if (useRedis) {
                     if (useRedisHash) {
-                        result = redisGetHash(nb);
+                        result = redisGetHash(nb, withTTL);
                     } else {
-                        result = redisGetSimple(nb);
+                        result = redisGetSimple(nb, withTTL);
                     }
                 } else {
                     result = fibonacci(nb);
@@ -90,7 +91,7 @@ public class Main {
             return fibonacci(n - 1) + fibonacci(n - 2);
         }
 
-        private long redisGetSimple(long nb) {
+        private long redisGetSimple(long nb, boolean withTTL) {
             String key = "fibonacci:" + nb;
 
             // Check if the value exists in Redis
@@ -101,11 +102,17 @@ public class Main {
 
             // Calculate and store the value
             long result = fibonacci(nb);
-            jedis.set(key, String.valueOf(result));
+
+            if (withTTL) {
+                jedis.setex(key, 15, String.valueOf(result));
+            } else {
+                jedis.set(key, String.valueOf(result));
+            }
+
             return result;
         }
 
-        private long redisGetHash(long nb) {
+        private long redisGetHash(long nb, boolean withTTL) {
             String key = "fibonacci";
             String field = String.valueOf(nb);
 
@@ -117,7 +124,13 @@ public class Main {
 
             // Calculate and store the value
             long result = fibonacci(nb);
-            jedis.hset(key, field, String.valueOf(result));
+            String resStr = String.valueOf(result);
+            jedis.hset(key, field, resStr);
+
+            if (withTTL) {
+                jedis.hexpire(key, 15, field);
+            }
+
             return result;
         }
     }

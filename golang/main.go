@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 func main() {
@@ -20,6 +21,7 @@ func main() {
 	http.HandleFunc("/calculation/", func(w http.ResponseWriter, r *http.Request) {
 		useRedis := r.URL.Query().Get("use_redis") == "true"
 		useRedisHash := r.URL.Query().Get("use_redis_hash") == "true"
+		withTTL := r.URL.Query().Get("with_ttl") == "true"
 		nbStr := r.URL.Path[len("/calculation/"):]
 		nb, err := strconv.ParseInt(nbStr, 10, 64)
 		if err != nil || nb < 0 {
@@ -32,9 +34,9 @@ func main() {
 		if useRedis {
 
 			if useRedisHash {
-				result, err = redisGetHash(cli, nb)
+				result, err = redisGetHash(cli, nb, withTTL)
 			} else {
-				result, err = redisGetSimple(cli, nb)
+				result, err = redisGetSimple(cli, nb, withTTL)
 			}
 
 			if err != nil {
@@ -72,7 +74,7 @@ func fibonacci(n int64) int64 {
 }
 
 // redisGetSimple is a function that gets a value from Redis, if the value is not found, it calculates it and sets it in Redis
-func redisGetSimple(cli rueidis.Client, nb int64) (int64, error) {
+func redisGetSimple(cli rueidis.Client, nb int64, withTTL bool) (int64, error) {
 
 	// We build a unique key for the value
 	key := fmt.Sprintf("fibonacci:%d", nb)
@@ -94,10 +96,15 @@ func redisGetSimple(cli rueidis.Client, nb int64) (int64, error) {
 		result := fibonacci(nb)
 
 		// We set the value in Redis, if an error occurs we print it, but we don't return it since we already have the value
-		cmd = cli.B().Set().
+		partialCmd := cli.B().Set().
 			Key(key).
-			Value(strconv.FormatInt(result, 10)).
-			Build()
+			Value(strconv.FormatInt(result, 10))
+
+		if withTTL {
+			cmd = partialCmd.Ex(15 * time.Second).Build()
+		} else {
+			cmd = partialCmd.Build()
+		}
 
 		setResp := cli.Do(context.Background(), cmd)
 		if setResp.Error() != nil {
@@ -111,7 +118,7 @@ func redisGetSimple(cli rueidis.Client, nb int64) (int64, error) {
 }
 
 // redisGetHash is a function that gets a value from a Redis hash
-func redisGetHash(cli rueidis.Client, nb int64) (int64, error) {
+func redisGetHash(cli rueidis.Client, nb int64, withTTL bool) (int64, error) {
 	// We build a unique key for the value
 	key := "fibonacci"
 	hKey := strconv.FormatInt(nb, 10)
@@ -137,12 +144,26 @@ func redisGetHash(cli rueidis.Client, nb int64) (int64, error) {
 		cmd = cli.B().Hset().
 			Key(key).
 			FieldValue().
-			FieldValue(hKey, strconv.FormatInt(result, 10)).
-			Build()
+			FieldValue(hKey, strconv.FormatInt(result, 10)).Build()
 
 		setResp := cli.Do(context.Background(), cmd)
 		if setResp.Error() != nil {
 			fmt.Println(setResp.Error())
+		}
+
+		if withTTL {
+			cmd = cli.B().Hexpire().
+				Key(key).
+				Seconds(15).
+				Fields().
+				Numfields(1).
+				Field(hKey).
+				Build()
+
+			expResp := cli.Do(context.Background(), cmd)
+			if expResp.Error() != nil {
+				fmt.Println(expResp.Error())
+			}
 		}
 
 		return result, nil

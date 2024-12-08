@@ -16,7 +16,7 @@ def fibonacci(n):
     return fibonacci(n - 1) + fibonacci(n - 2)
 
 # Retrieve or calculate Fibonacci value using simple Redis keys
-def redis_get_simple(client, nb):
+def redis_get_simple(client, nb, with_ttl):
     key = f"fibonacci:{nb}"
 
     # Try to get the value from Redis
@@ -26,11 +26,11 @@ def redis_get_simple(client, nb):
 
     # Calculate and store the value in Redis
     result = fibonacci(nb)
-    client.set(key, result)
+    client.set(key, result, ex=15 if with_ttl else None)
     return result
 
 # Retrieve or calculate Fibonacci value using Redis hashes
-def redis_get_hash(client, nb):
+def redis_get_hash(client, nb, with_ttl):
     key = "fibonacci"
     field = str(nb)
 
@@ -42,12 +42,17 @@ def redis_get_hash(client, nb):
     # Calculate and store the value in Redis hash
     result = fibonacci(nb)
     client.hset(key, field, result)
+
+    if with_ttl:
+        client.hexpire(key, 15, field)
+
     return result
 
 @app.route('/calculation/<int:nb>', methods=['GET'])
 def calculation(nb):
     use_redis = request.args.get('use_redis', 'false').lower() == 'true'
     use_redis_hash = request.args.get('use_redis_hash', 'false').lower() == 'true'
+    with_ttl = request.args.get('with_ttl', 'false').lower() == 'true'
 
     if nb < 0:
         return jsonify(error="Invalid number"), 400
@@ -55,9 +60,9 @@ def calculation(nb):
     try:
         if use_redis:
             if use_redis_hash:
-                result = redis_get_hash(redis_client, nb)
+                result = redis_get_hash(redis_client, nb, with_ttl)
             else:
-                result = redis_get_simple(redis_client, nb)
+                result = redis_get_simple(redis_client, nb, with_ttl)
         else:
             result = fibonacci(nb)
 

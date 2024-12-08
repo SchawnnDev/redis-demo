@@ -24,6 +24,30 @@ set mykey "Hello"
 get mykey
 ```
 
+## Storing data with expiration
+
+```bash
+set mykey "Hello" EX 10
+```
+
+## Retrieving data expiration time
+
+```bash
+ttl mykey
+```
+
+## Storing data only if the key already exists
+
+```bash
+set mykey "Hello" XX
+```
+
+## Storing data only if the key does not exist
+
+```bash
+set mykey "Hello" NX
+```
+
 ## Storing a list
 
 ```bash
