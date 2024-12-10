@@ -20,7 +20,7 @@ Host: Windows Subsystem for Linux - Ubuntu-22.04 (2.3.26)
 CPU: AMD Ryzen 7 2700X (16) @ 4.15 GHz
 ```
 
-# Performance Results
+### Performance Results
 
 | **Scenario**                | **Total Execution Time**   | **Usr Time**              | **Sys Time**              |
 |-----------------------------|----------------------------|---------------------------|---------------------------|
