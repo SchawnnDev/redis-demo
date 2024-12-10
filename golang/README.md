@@ -20,6 +20,18 @@ Host: Windows Subsystem for Linux - Ubuntu-22.04 (2.3.26)
 CPU: AMD Ryzen 7 2700X (16) @ 4.15 GHz
 ```
 
+# Performance Results
+
+| **Scenario**                | **Total Execution Time**   | **Usr Time**              | **Sys Time**              |
+|-----------------------------|----------------------------|---------------------------|---------------------------|
+| **Http without Redis**       | 5.99 secs                 | 4.56 millis / 199.00 µs   | 0.76 millis / 758.00 µs   |
+| **Http with Redis (simple)** |                            |                           |                           |
+| - First calculation          | 6.04 secs                 | 5.63 millis / 642.00 µs   | 0.00 millis / 0.00 µs     |
+| - Cached result              | 15.74 millis              | 0.15 millis / 150.00 µs   | 6.07 millis / 549.00 µs   |
+| **Http with Redis (hash)**   |                            |                           |                           |
+| - First calculation          | 6.03 secs                 | 6.87 millis / 670.00 µs   | 2.86 millis / 2.86 µs     |
+| - Cached result              | 7.55 millis               | 5.68 millis / 573.00 µs   | 0.21 millis / 215.00 µs   |
+
 ### Http without redis
 
 ```bash
